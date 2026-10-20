@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SORTBOT | Delta Robot Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">S</span><span>SORTBOT<small>DELTA ROBOT SYSTEM</small></span></a>
+    <div class="top-right"><span class="mode-pill"><i></i> VISION TEST</span><span id="clock">--:--:--</span></div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow"><span class="line"></span> REAL-TIME SORTING SYSTEM</div>
+      <p class="welcome">WELCOME TO OUR PROJECT</p>
+      <h1>DETECTING<br><span id="hero-color">OBJECTS</span></h1>
+      <p class="hero-copy">A vision-guided Delta Robot dashboard for object detection and system health.</p>
+    </section>
+
+    <section class="panel camera-panel">
+      <div class="panel-heading"><div><span class="icon">▣</span> CAMERA FEED / CAM-01</div><span class=" status" id="camera_status"><i class="dot green"></i>CONNECTED</span></div>
+  
+       
+<div class="camera-placeholder">
+    <img
+        src="{{ url_for('camera_feed') }}"
+        alt="Live SORTBOT camera feed"
+        style="width: 100%; height: 100%; object-fit: contain; display: block;"
+    />
+</div>
+        <div class="cam-corner corner-tl"></div><div class="cam-corner corner-tr"></div><div class="cam-corner corner-bl"></div><div class="cam-corner corner-br"></div>
+        <div class="camera-foot">
+    <span>VISION PIPELINE <b id="vision-status">NOT STARTED</b></span>
+    <span>DETECTION OVERLAY <b id="overlay-status">OFF</b></span>
+</div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="panel stat-card"><div class="stat-top"><span class="eyebrow">TOTAL SORTED</span><span class="stat-icon blue">◎</span></div><div class="stat-number" id="total">137</div><div class="muted">Objects reported by vision</div><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+      <article class="panel stat-card"><div class="stat-top"><span class="eyebrow">PICK SUCCESS RATE</span><span class="stat-icon blue">◌</span></div><div class="stat-number">—<small></small></div><div class="muted">Available after real cycles are logged</div><div class="ring"><span>—</span></div></article>
+      <article class="panel stat-card"><div class="stat-top"><span class="eyebrow">AVG. CYCLE TIME</span><span class="stat-icon yellow">◷</span></div><div class="stat-number">—<small>s</small></div><div class="muted">Detection to return home</div><div class="mini-bars yellow-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+      <article class="panel stat-card"><div class="stat-top"><span class="eyebrow">SESSION RECORD</span><span class="stat-icon purple">✧</span></div><div class="stat-number">—</div><div class="muted">Longest successful streak</div><span class="best-run">VISION DATA PENDING</span></article>
+    </section>
+
+    <section class="panel tally-panel">
+      <div class="panel-heading"><div><span class="icon">◎</span> RUNNING TALLY</div><span class="status"><i class="dot amber"></i> SAMPLE DATA</span></div>
+      <div class="tally-grid">
+        <div class="tally-item red"><div class="tally-mark"></div><div class="tally-count" id="red-count">45</div><div class="tally-label">RED</div><small>LIVE OBJECTS</small></div>
+        <div class="tally-item green"><div class="tally-mark"></div><div class="tally-count" id="green-count">41</div><div class="tally-label">GREEN</div><small>LIVE OBJECTS</small></div>
+        <div class="tally-item blue"><div class="tally-mark"></div><div class="tally-count" id="blue-count">28</div><div class="tally-label">BLUE</div><small>LIVE OBJECTS</small></div>
+        <div class="tally-item yellow"><div class="tally-mark"></div><div class="tally-count" id="yellow-count">23</div><div class="tally-label">YELLOW</div><small>LIVE OBJECTS</small></div>
+      </div>
+    </section>
+
+    <section class="panel process-panel">
+      <div class="panel-heading"><div><span class="icon">⌁</span> CURRENT STATUS</div><span class="status"><i class="dot amber"></i> IDLE</span></div>
+      <div class="process">
+    <div class="process-step active">
+        <span class="step-icon">◎</span>
+        <strong>DETECT OBJECT</strong>
+        <small>Camera detects object</small>
+    </div>
+
+    <div class="process-step" id="identify-step">
+        <span class="step-icon">◉</span>
+        <strong>IDENTIFY COLOUR</strong>
+        <small>Recognize red, green, blue or yellow</small>
+    </div>
+
+    <div class="process-step">
+        <span class="step-icon">◇</span>
+        <strong>CLASSIFY</strong>
+        <small>Match object to colour category</small>
+    </div>
+
+    <div class="process-step">
+        <span class="step-icon">✓</span>
+        <strong>DONE</strong>
+        <small>Update colour tally</small>
+    </div>
+</div>
+      <div class="signal-row"><span><i class="dot amber"></i> VISION RUNNING</span><span><i class="dot amber"></i> ROBOT NOT CONNECTED</span><span><i class="dot blue-dot"></i> DASHBOARD ACTIVE</span></div>
+    </section>
+
+    <section class="two-col">
+      <article class="panel activity-panel">
+        <div class="panel-heading"><div><span class="icon">≋</span> RECENT ACTIVITY</div><span class="status"><i class="dot amber"></i> LIVE ACTIVITY</span></div>
+        <div id="activity-list" class="activity-list">
+
+        </div>
+      </article>
+      <article class="panel health-panel">
+        <div class="panel-heading"><div><span class="icon">⬡</span> SYSTEM HEALTH</div><span class="status"><i class="dot amber"></i> SETUP REQUIRED</span></div>
+        <div class="health-row"><span>Flask Dashboard</span><strong class="good">Running <b>✓</b></strong></div>
+        
+        <div class="health-row">
+          <span>Python Vision</span>
+          <strong id="python-vision-health" class="pending">Not started <b>!</b></strong>
+        </div>
+        <div class="health-row">
+          <span>Camera</span>
+          <strong id="camera-health" class="pending">Not connected <b>!</b></strong>
+        </div>
+        
+
+        <div class="health-footer"><span>SYSTEM STATUS</span><strong>DEMO / OFFLINE</strong></div>
+      </article>
+    </section>
+    <footer><span>DELTA ROBOT · SORTBOT DASHBOARD</span><span>LOCAL DEVELOPMENT BUILD · <span id="updated">Waiting for API</span></span></footer>
+  </main>
+</body>
+</html>

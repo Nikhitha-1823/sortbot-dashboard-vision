@@ -1,0 +1,513 @@
+DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>SORTBOT - Precision Delta Robot Vision Sorter</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+            }
+          },
+          animation: {
+            'pulse-fast': 'pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 8s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Global & Glassmorphism Styles -->
+<style data-purpose="glass-styling">
+    body {
+      background-color: #eaf3fc;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+.bg-canvas {
+  background-color: #eaf3fc;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+    
+
+    /* Soft modern frosted card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 30px -5px rgba(148, 175, 214, 0.18), 0 4px 12px -2px rgba(148, 175, 214, 0.12);
+    }
+
+    .glass-card-subtle {
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+    }
+
+    .glass-dock {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 -8px 28px rgba(100, 149, 237, 0.12);
+    }
+
+    /* Subtle custom scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="bg-canvas min-h-screen text-slate-800 flex justify-center selection:bg-sky-200">
+<!-- Mobile Screen Frame Constraint -->
+<div class="w-full max-w-md min-h-screen flex flex-col relative pb-32">
+<!-- BEGIN: AndroidStatusBar -->
+<header class="sticky top-0 z-50 pt-2 px-5 pb-1 flex justify-between items-center text-xs font-semibold text-slate-700 bg-white/20 backdrop-blur-md" data-purpose="android-status-bar">
+<!-- Time -->
+<span class="tracking-tight font-medium text-slate-800 text-[13px]">09:41</span>
+<!-- Status Icons: Wifi, 5G, Battery -->
+<div class="flex items-center space-x-2 text-slate-700">
+<!-- Wi-Fi Icon -->
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24">
+<path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 2.5c3.81 0 7.27 1.48 9.87 3.93L12 18.25 2.13 10.43A14.39 14.39 0 0 1 12 6.5z"></path>
+</svg>
+<!-- 5G Label -->
+<span class="text-[10px] font-bold tracking-tighter">5G</span>
+<!-- Battery with 98% level -->
+<div class="flex items-center space-x-0.5">
+<div class="w-5 h-2.5 border border-slate-700 rounded-sm p-0.5 flex items-center">
+<div class="h-full bg-slate-800 w-[95%] rounded-2xs"></div>
+</div>
+<div class="w-0.5 h-1 bg-slate-700 rounded-r-xs"></div>
+</div>
+</div>
+</header>
+<!-- END: AndroidStatusBar -->
+<main class="px-4 pt-2 space-y-4 flex-1">
+<!-- BEGIN: AppHeader -->
+<section class="glass-card rounded-2xl p-4 transition-all duration-300" data-purpose="app-header">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-3">
+<!-- Sleek Robot Tri-Arm Icon Badge -->
+<div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/25">
+<svg class="w-6 h-6 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M12 3v6"></path>
+<path d="M4.22 19.78l5.2-3"></path>
+<path d="M19.78 19.78l-5.2-3"></path>
+<circle cx="12" cy="3" r="1.5"></circle>
+<circle cx="4.22" cy="19.78" r="1.5"></circle>
+<circle cx="19.78" cy="19.78" r="1.5"></circle>
+</svg>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h1 class="text-xl font-extrabold tracking-tight text-slate-900 leading-none">SORTBOT</h1>
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-700 border border-sky-200">DELTA v2.4</span>
+</div>
+<p class="text-xs text-slate-500 font-medium mt-0.5">High-Speed Parallel Kinematics Vision Sorter</p>
+</div>
+</div>
+<!-- Quick Cycle Rate Tally -->
+<div class="text-right">
+<span class="text-lg font-black font-mono text-sky-600">48</span>
+<span class="text-[10px] block font-semibold text-slate-400 -mt-1 uppercase tracking-wider">PPM Rate</span>
+</div>
+</div>
+<!-- ESP32 & Wi-Fi Telemetry Chip -->
+<div class="mt-3.5 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-medium text-slate-600">
+<div class="flex items-center space-x-2">
+<!-- Pulsing Emerald Indicator -->
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+<span class="font-mono text-slate-700 font-semibold">ESP32-S3</span>
+<span class="text-slate-300">•</span>
+<span class="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">Online (192.168.4.15)</span>
+</div>
+<div class="flex items-center space-x-1.5 text-slate-500 font-mono text-[10px]">
+<span>12ms</span>
+<span class="text-slate-300">•</span>
+<span>-42 dBm</span>
+</div>
+</div>
+</section>
+<!-- END: AppHeader -->
+<!-- BEGIN: PipelineStageTracker -->
+<section class="glass-card rounded-2xl p-3.5" data-purpose="pipeline-kinematics-tracker">
+<div class="flex items-center justify-between mb-2.5">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+            Kinematic Pipeline Phase
+          </span>
+<span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 border border-sky-200/70 animate-pulse">
+            CYC #14809 RUNNING
+          </span>
+</div>
+<!-- Stages Stepper -->
+<div class="grid grid-cols-4 gap-1.5 text-center relative mb-3">
+<!-- Stage 1: DETECT (Completed) -->
+<div class="bg-sky-50/80 border border-sky-200 rounded-xl p-1.5 flex flex-col items-center">
+<div class="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] mb-1">
+              ✓
+            </div>
+<span class="text-[10px] font-bold text-sky-900 tracking-tight">DETECT</span>
+<span class="text-[9px] text-sky-600 font-mono">0.08s</span>
+</div>
+<!-- Stage 2: PICK (Active Glow) -->
+<div class="bg-gradient-to-b from-sky-500 to-indigo-600 border border-indigo-400 text-white rounded-xl p-1.5 flex flex-col items-center shadow-lg shadow-sky-500/30 ring-2 ring-sky-300 ring-offset-1">
+<div class="w-5 h-5 rounded-full bg-white text-sky-600 flex items-center justify-center text-[10px] font-black mb-1 animate-spin-slow">
+              ●
+            </div>
+<span class="text-[10px] font-bold text-white tracking-tight">PICK</span>
+<span class="text-[9px] text-sky-100 font-mono">ACTIVE</span>
+</div>
+<!-- Stage 3: PLACE (Queued) -->
+<div class="glass-card-subtle rounded-xl p-1.5 flex flex-col items-center opacity-60">
+<div class="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-semibold mb-1">
+              3
+            </div>
+<span class="text-[10px] font-semibold text-slate-700 tracking-tight">PLACE</span>
+<span class="text-[9px] text-slate-400 font-mono">Queue</span>
+</div>
+<!-- Stage 4: DONE (Queued) -->
+<div class="glass-card-subtle rounded-xl p-1.5 flex flex-col items-center opacity-60">
+<div class="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-semibold mb-1">
+              4
+            </div>
+<span class="text-[10px] font-semibold text-slate-700 tracking-tight">DONE</span>
+<span class="text-[9px] text-slate-400 font-mono">Bin 3</span>
+</div>
+</div>
+<!-- Live Delta Coordinates & Effector Status -->
+<div class="bg-slate-900/5 rounded-xl p-2.5 flex items-center justify-between text-[11px] font-mono border border-slate-200/50">
+<div class="flex items-center space-x-2 text-slate-700">
+<span class="font-bold text-slate-400 text-[10px]">POS</span>
+<span><span class="text-slate-400">X:</span> <strong class="text-slate-900">+12.4</strong></span>
+<span><span class="text-slate-400">Y:</span> <strong class="text-slate-900">-84.2</strong></span>
+<span><span class="text-slate-400">Z:</span> <strong class="text-slate-900">-145.0</strong></span>
+</div>
+<div class="flex items-center space-x-1 font-sans text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-300">
+<svg class="w-3 h-3 text-amber-600 fill-current animate-pulse" viewbox="0 0 20 20">
+<path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+</svg>
+<span>VAC 84 kPa</span>
+</div>
+</div>
+</section>
+<!-- END: PipelineStageTracker -->
+<!-- BEGIN: VisionCameraFeed -->
+<section class="glass-card rounded-2xl p-3.5 space-y-3" data-purpose="overhead-vision-camera">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></div>
+<h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Conveyor Overhead Cam OV5640</h2>
+</div>
+<span class="text-[10px] font-mono bg-slate-900/80 text-white px-2 py-0.5 rounded-full font-semibold">
+            60 FPS • 1080p
+          </span>
+</div>
+<!-- Live camera viewport -->
+<div class="relative w-full aspect-[16/10] bg-slate-950 rounded-xl overflow-hidden border border-slate-300/60 shadow-inner">
+  <img
+    src="/camera_feed"
+    alt="Live SORTBOT camera feed"
+    style="width:100%; height:100%; object-fit:contain; display:block;"
+  />
+</div>
+
+<!-- Vision Toolbar Quick Action Buttons -->
+<div class="grid grid-cols-3 gap-2 pt-1" data-purpose="camera-controls">
+<button class="py-1.5 px-2 bg-white/70 hover:bg-white border border-slate-200/90 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-center space-x-1.5 shadow-xs transition active:scale-95">
+<svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewbox="0 0 20 20">
+<path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM7.05 14.95a1 1 0 10-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM10 16a1 1 0 110 2v-1a1 1 0 010-1zM14.243 14.243a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zM10 6a4 4 0 100 8 4 4 0 000-8z"></path>
+</svg>
+<span>Ring Light</span>
+</button>
+<button class="py-1.5 px-2 bg-white/70 hover:bg-white border border-slate-200/90 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-center space-x-1.5 shadow-xs transition active:scale-95">
+<svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Calibrate Plane</span>
+</button>
+<button class="py-1.5 px-2 bg-white/70 hover:bg-white border border-slate-200/90 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-center space-x-1.5 shadow-xs transition active:scale-95">
+<svg class="w-3.5 h-3.5 text-slate-600" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+<span>Pause Cam</span>
+</button>
+</div>
+</section>
+<!-- END: VisionCameraFeed -->
+<!-- BEGIN: ColorObjectCounters -->
+<section class="space-y-2.5" data-purpose="color-counters-dashboard">
+<!-- Tally Header & Summary -->
+<div class="flex items-center justify-between px-1">
+<h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+<span>Color Sorter Tally</span>
+</h2>
+<span class="text-[11px] font-semibold text-slate-700 bg-white/80 border border-slate-200/80 px-2.5 py-0.5 rounded-full shadow-xs">
+<strong id="live-total" class="text-sky-600 font-mono font-bold">0</strong> Total • <strong class="text-emerald-600 font-mono">99.8%</strong> Accuracy
+          </span>
+</div>
+<!-- 4-Card Grid for Color Counters -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- RED CARD -->
+<div class="glass-card rounded-2xl p-3 flex flex-col justify-between border-l-4 border-l-rose-500 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50"></span>
+<span class="text-xs font-bold text-slate-700">RUBY RED</span>
+</span>
+<span class="text-[10px] font-mono font-semibold text-rose-700 bg-rose-100/90 px-1.5 py-0.2 rounded-md">
+                +18 run
+              </span>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<span id="red-count" class="text-2xl font-black font-mono text-slate-800 tracking-tight">0</span>
+<span class="text-[10px] text-slate-500 font-medium">Bin #1 (22%)</span>
+</div>
+<!-- Progress mini bar -->
+<div class="w-full bg-slate-200/60 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-rose-500 h-full rounded-full" style="width: 22%"></div>
+</div>
+</div>
+<!-- GREEN CARD -->
+<div class="glass-card rounded-2xl p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+<span class="text-xs font-bold text-slate-700">EMERALD</span>
+</span>
+<span class="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-100/90 px-1.5 py-0.2 rounded-md">
+                +24 run
+              </span>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<span id="green-count" class="text-2xl font-black font-mono text-slate-800 tracking-tight">0</span> 
+<span class="text-[10px] text-slate-500 font-medium">Bin #2 (29%)</span>
+</div>
+<!-- Progress mini bar -->
+<div class="w-full bg-slate-200/60 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 29%"></div>
+</div>
+</div>
+<!-- BLUE CARD -->
+<div class="glass-card rounded-2xl p-3 flex flex-col justify-between border-l-4 border-l-sky-600 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-full bg-sky-600 shadow-sm shadow-sky-600/50"></span>
+<span class="text-xs font-bold text-slate-700">SAPPHIRE</span>
+</span>
+<span class="text-[10px] font-mono font-semibold text-sky-700 bg-sky-100/90 px-1.5 py-0.2 rounded-md">
+                +31 run
+              </span>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<span id="blue-count" class="text-2xl font-black font-mono text-slate-800 tracking-tight">0</span>
+<span class="text-[10px] text-slate-500 font-medium">Bin #3 (34%)</span>
+</div>
+<!-- Progress mini bar -->
+<div class="w-full bg-slate-200/60 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-sky-600 h-full rounded-full" style="width: 34%"></div>
+</div>
+</div>
+<!-- YELLOW CARD -->
+<div class="glass-card rounded-2xl p-3 flex flex-col justify-between border-l-4 border-l-amber-500 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50"></span>
+<span class="text-xs font-bold text-slate-700">AMBER</span>
+</span>
+<span class="text-[10px] font-mono font-semibold text-amber-700 bg-amber-100/90 px-1.5 py-0.2 rounded-md">
+                +12 run
+              </span>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<span id="yellow-count" class="text-2xl font-black font-mono text-slate-800 tracking-tight">0</span>
+<span class="text-[10px] text-slate-500 font-medium">Bin #4 (15%)</span>
+</div>
+<!-- Progress mini bar -->
+<div class="w-full bg-slate-200/60 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-amber-400 h-full rounded-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: ColorObjectCounters -->
+<script>
+async function updateColorCounters() {
+  try {
+    const response = await fetch("/api/status");
+    const data = await response.json();
+
+    document.getElementById("red-count").textContent = data.counts.RED;
+    document.getElementById("green-count").textContent = data.counts.GREEN;
+    document.getElementById("blue-count").textContent = data.counts.BLUE;
+    document.getElementById("yellow-count").textContent = data.counts.YELLOW;
+  } catch (error) {
+    console.error("Could not update color counters:", error);
+  }
+}
+
+updateColorCounters();
+setInterval(updateColorCounters, 1000);
+</script>
+<!-- BEGIN: LiveActivityTelemetry -->
+<section class="glass-card rounded-2xl p-3.5" data-purpose="live-activity-log">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Live Telemetry &amp; Event Log</h2>
+</div>
+<span class="text-[10px] text-slate-500 font-mono">Stream Active</span>
+</div>
+<div class="space-y-1.5 font-mono text-[11px] max-h-28 overflow-y-auto custom-scroll pr-1">
+<!-- Log Entry 1 -->
+<div class="p-1.5 rounded-lg bg-sky-50/70 border border-sky-100 flex items-center justify-between text-slate-700">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-sky-600 shrink-0"></span>
+<span class="text-slate-400 text-[10px]">09:41:22</span>
+<span class="truncate">Picked <strong class="text-sky-700">Blue #215</strong> → Bin 3</span>
+</div>
+<span class="text-slate-500 text-[10px] shrink-0 font-medium ml-1">0.42s</span>
+</div>
+<!-- Log Entry 2 -->
+<div class="p-1.5 rounded-lg bg-white/50 border border-slate-100 flex items-center justify-between text-slate-700">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+<span class="text-slate-400 text-[10px]">09:41:20</span>
+<span class="truncate">Picked <strong class="text-rose-700">Red #142</strong> → Bin 1</span>
+</div>
+<span class="text-slate-500 text-[10px] shrink-0 font-medium ml-1">0.39s</span>
+</div>
+<!-- Log Entry 3 -->
+<div class="p-1.5 rounded-lg bg-white/50 border border-slate-100 flex items-center justify-between text-slate-700">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+<span class="text-slate-400 text-[10px]">09:41:18</span>
+<span class="truncate">Picked <strong class="text-emerald-700">Green #189</strong> → Bin 2</span>
+</div>
+<span class="text-slate-500 text-[10px] shrink-0 font-medium ml-1">0.41s</span>
+</div>
+<!-- Log Entry 4 -->
+<div class="p-1.5 rounded-lg bg-white/40 border border-slate-100 flex items-center justify-between text-slate-500 text-[10px]">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+<span>09:41:15</span>
+<span class="truncate">Conveyor feed steady • Speed: 120 mm/s</span>
+</div>
+<span class="text-emerald-600 font-semibold">NOMINAL</span>
+</div>
+</div>
+</section>
+<!-- END: LiveActivityTelemetry -->
+</main>
+<!-- BEGIN: FixedBottomControlsAndDock -->
+<footer class="fixed bottom-0 max-w-md w-full glass-dock z-50 px-4 pt-3 pb-5 space-y-3" data-purpose="bottom-safety-and-navigation">
+<!-- Primary Machine Safety & Action Controls -->
+<div class="grid grid-cols-12 gap-2 items-center">
+<!-- Emergency Stop (E-STOP) -->
+<button class="col-span-4 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-md shadow-rose-600/30 border border-rose-400/50 flex items-center justify-center space-x-1.5 active:scale-95 transition">
+<svg class="w-4 h-4 fill-current shrink-0" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" fill-rule="evenodd"></path>
+</svg>
+<span class="tracking-wider">E-STOP</span>
+</button>
+<!-- Start / Pause Main Toggle Button -->
+<button class="col-span-5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-md shadow-sky-500/25 border border-sky-400/50 flex items-center justify-center space-x-1.5 active:scale-95 transition">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+<span>PAUSE SORT</span>
+</button>
+<!-- Reset Counters -->
+
+<button onclick="resetCounters()" class="col-span-3 bg-white/90 hover:bg-white text-slate-700 font-semibold text-xs py-2.5 px-2 rounded-xl border border-slate-300/80 shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition" title="Reset Counters">
+  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <span class="text-[11px]">RESET</span>
+</button>
+
+<!-- Tab 2: Telemetry -->
+<button class="flex flex-col items-center hover:text-slate-600 transition focus:outline-hidden">
+<svg class="w-5 h-5 fill-none stroke-current" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5">Telemetry</span>
+</button>
+<!-- Tab 3: Vision Config -->
+<button class="flex flex-col items-center hover:text-slate-600 transition focus:outline-hidden">
+<svg class="w-5 h-5 fill-none stroke-current" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5">Vision AI</span>
+</button>
+<!-- Tab 4: Calibration -->
+<button class="flex flex-col items-center hover:text-slate-600 transition focus:outline-hidden">
+<svg class="w-5 h-5 fill-none stroke-current" stroke-width="2" viewbox="0 0 24 24">
+<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5">Calibrate</span>
+</button>
+</nav>
+<!-- Android Home Bar Pill -->
+<div class="flex justify-center pt-1">
+<div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+</div>
+</footer>
+<!-- END: FixedBottomControlsAndDock -->
+</div>
+
+<script>
+async function resetCounters() {
+  try {
+    const response = await fetch("/api/reset", {
+      method: "POST"
+    });
+
+    if (!response.ok) throw new Error("Reset failed");
+
+    alert("All counters reset successfully!");
+  } catch (error) {
+    alert("Could not reset counters. Check that Flask is running.");
+  }
+}
+</script>
+</body></html>
